@@ -1,3 +1,4 @@
+Updates:
 Modification:
 - Add shuffle pixels
 - Add random pixels
@@ -21,7 +22,7 @@ Parameters change:
 
 
 
-
+Original
 - [Code organization](#code-organization)
 - [Command examples](#command-examples)
 - [SGD implicit regularization](#sgd-implicit-regularization)
