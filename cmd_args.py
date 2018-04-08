@@ -6,11 +6,14 @@ parser.add_argument('--command', default='train', choices=['train'])
 parser.add_argument('--data', default='cifar10', choices=['cifar10'])
 parser.add_argument('--num-classes', type=int, default=10)
 parser.add_argument('--data-augmentation', type=bool, default=False)
-parser.add_argument('--label-corrupt-prob', type=float, default=0.0)
+
+parser.add_argument('--label-corrupt', type=bool, default=False)
+parser.add_argument('--pixel-corrupt', type=bool, default=False)
+parser.add_argument('--pixel-shuffle', type=bool, default=False)
 
 parser.add_argument('--batch-size', type=int, default=128)
 parser.add_argument('--epochs', type=int, default=300)
-parser.add_argument('--learning-rate', type=float, default=0.1)
+parser.add_argument('--learning-rate', type=float, default=0.01)
 parser.add_argument('--momentum', type=float, default=0.9)
 parser.add_argument('--weight-decay', type=float, default=1e-4)
 
@@ -28,6 +31,9 @@ parser.add_argument('--mlp-spec', default='512',
                     help='mlp spec: e.g. 512x128x512 indicates 3 hidden layers')
 
 parser.add_argument('--name', default='', help='Experiment name')
+parser.add_argument('--adjust-lr', type=bool, default=False)
+
+parser.add_argument('--save-every', type=int, default=0)
 
 
 def format_experiment_name(args):
@@ -36,8 +42,6 @@ def format_experiment_name(args):
     name += '_'
 
   name += args.data + '_'
-  if args.label_corrupt_prob > 0:
-    name += 'corrupt%g_' % args.label_corrupt_prob
 
   name += args.arch
   if args.arch == 'wide-resnet':

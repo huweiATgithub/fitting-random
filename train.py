@@ -15,7 +15,7 @@ import cmd_args
 import model_mlp, model_wideresnet
 
 
-def get_data_loaders(args, shuffle_train=True):
+def get_data_loaders(args, corrupt_kwargs, shuffle_train=True):
   if args.data == 'cifar10':
     normalize = transforms.Normalize(mean=[x/255.0 for x in [125.3, 123.0, 113.9]],
                                      std=[x / 255.0 for x in [63.0, 62.1, 66.7]])
@@ -42,12 +42,12 @@ def get_data_loaders(args, shuffle_train=True):
     train_loader = torch.utils.data.DataLoader(
         CIFAR10RandomLabels(root='./data', train=True, download=True,
                             transform=transform_train, num_classes=args.num_classes,
-                            corrupt_prob=args.label_corrupt_prob),
+                            **corrupt_kwargs),
         batch_size=args.batch_size, shuffle=shuffle_train, **kwargs)
     val_loader = torch.utils.data.DataLoader(
         CIFAR10RandomLabels(root='./data', train=False,
-                            transform=transform_test, num_classes=args.num_classes,
-                            corrupt_prob=args.label_corrupt_prob),
+                            transform=transform_test, num_classes=args.num_classes),
+                          # corrupt_prob=args.label_corrupt_prob),
         batch_size=args.batch_size, shuffle=False, **kwargs)
 
     return train_loader, val_loader
@@ -76,7 +76,7 @@ def get_model(args):
 
 
 def train_model(args, model, train_loader, val_loader,
-                start_epoch=None, epochs=None):
+                log_name, start_epoch=None, epochs=None):
   cudnn.benchmark = True
 
   # define loss function (criterion) and pptimizer
@@ -88,8 +88,11 @@ def train_model(args, model, train_loader, val_loader,
   start_epoch = start_epoch or 0
   epochs = epochs or args.epochs
 
+  log = logging.getLogger(log_name)
+  save_dir = os.path.join('runs', args.exp_name)
   for epoch in range(start_epoch, epochs):
-    adjust_learning_rate(optimizer, epoch, args)
+    if args.adjust_lr:
+      adjust_learning_rate(optimizer, epoch, args)
 
     # train for one epoch
     tr_loss, tr_prec1 = train_epoch(train_loader, model, criterion, optimizer, epoch, args)
@@ -100,7 +103,11 @@ def train_model(args, model, train_loader, val_loader,
     if args.eval_full_trainset:
       tr_loss, tr_prec1 = validate_epoch(train_loader, model, criterion, epoch, args)
 
-    logging.info('%03d: Acc-tr: %6.2f, Acc-val: %6.2f, L-tr: %6.4f, L-val: %6.4f',
+    # save model
+    if args.save_every > 0 and epoch > 0 and epoch % args.save_every == 0:
+      torch.save(model.state_dict(), os.path.join(save_dir, 'model_{0}_{1}'.format(log_name, epoch // args.save_every)))
+
+    log.info('%03d: Acc-tr: %6.2f, Acc-val: %6.2f, L-tr: %6.4f, L-val: %6.4f',
                  epoch, tr_prec1, val_prec1, tr_loss, val_loss)
 
 
@@ -204,29 +211,65 @@ def accuracy(output, target, topk=(1,)):
   return res
 
 
-def setup_logging(args):
+def setup_logging(args, log_name=''):
+  # Generate log file position
   import datetime
   exp_dir = os.path.join('runs', args.exp_name)
   if not os.path.isdir(exp_dir):
     os.makedirs(exp_dir)
-  log_fn = os.path.join(exp_dir, "LOG.{0}.txt".format(datetime.date.today().strftime("%y%m%d")))
-  logging.basicConfig(filename=log_fn, filemode='w', level=logging.DEBUG)
-  # also log into console
-  console = logging.StreamHandler()
-  console.setLevel(logging.INFO)
-  logging.getLogger('').addHandler(console)
+  log_fn = os.path.join(exp_dir, "LOG.{0}.{1}.txt".format(datetime.date.today().strftime("%y%m%d"), log_name))
+
+  # Craete logger, add two handlers
+  log = logging.getLogger(log_name)
+  fileHandler = logging.FileHandler(log_fn, mode='w')
+  streamHandler = logging.StreamHandler()
+  log.setLevel(logging.DEBUG)
+  log.addHandler(fileHandler)
+  log.addHandler(streamHandler)
+
   print('Logging into %s...' % exp_dir)
+
+
+def get_log_name(corrupt_prob=0.0, shuffle_pixels=0, random_pixel_prob=0.0):
+  log_name = ''
+  if corrupt_prob > 0:
+    log_name += 'corrupt%g_' % corrupt_prob
+  if shuffle_pixels > 0:
+    log_name += 'shuffle%g_' % shuffle_pixels
+  if random_pixel_prob > 0:
+    log_name += 'random%g_' % random_pixel_prob
+  return log_name
 
 
 def main():
   args = cmd_args.parse_args()
-  setup_logging(args)
+  # kwords = {'corrupt_prob': 0.0, 'shuffle_pixels': 0, 'random_pixel_prob': 0.0}
+  kwords_list = []
+  if args.label_corrupt:
+    for i in range(1,11):
+      kwords = {'corrupt_prob': i * 0.1, 'shuffle_pixels': 0, 'random_pixel_prob': 0.0}
+      kwords_list.append(kwords)
+  if args.pixel_corrupt:
+    for i in range(1,11):
+      kwords = {'corrupt_prob': 0.0, 'shuffle_pixels': 0, 'random_pixel_prob': i * 0.1}
+      kwords_list.append(kwords)
+  if args.pixel_shuffle:
+    for i in range(1,3):
+      kwords = {'corrupt_prob': 0.0, 'shuffle_pixels': i, 'random_pixel_prob': 0.0}
+      kwords_list.append(kwords)
+  print(kwords_list)
+  # setup logging
+  for kwords in kwords_list:
+    log_name = get_log_name(**kwords)
+    setup_logging(args, log_name)
+    log = logging.getLogger(log_name)
 
-  if args.command == 'train':
-    train_loader, val_loader = get_data_loaders(args, shuffle_train=True)
-    model = get_model(args)
-    logging.info('Number of parameters: %d', sum([p.data.nelement() for p in model.parameters()]))
-    train_model(args, model, train_loader, val_loader)
+    if args.command == 'train':
+      train_loader, val_loader = get_data_loaders(args, corrupt_kwargs=kwords, shuffle_train=True)
+      model = get_model(args)
+      log.info('Number of parameters: %d', sum([p.data.nelement() for p in model.parameters()]))
+      train_model(args, model, train_loader, val_loader, log_name=log_name)
+
 
 
 if __name__ == '__main__':
