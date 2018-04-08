@@ -243,8 +243,8 @@ def get_log_name(corrupt_prob=0.0, shuffle_pixels=0, random_pixel_prob=0.0):
 
 def main():
   args = cmd_args.parse_args()
-  # kwords = {'corrupt_prob': 0.0, 'shuffle_pixels': 0, 'random_pixel_prob': 0.0}
-  kwords_list = []
+  kwords = {'corrupt_prob': 0.0, 'shuffle_pixels': 0, 'random_pixel_prob': 0.0}
+  kwords_list = [kwords]
   if args.label_corrupt:
     for i in range(1,11):
       kwords = {'corrupt_prob': i * 0.1, 'shuffle_pixels': 0, 'random_pixel_prob': 0.0}
@@ -257,6 +257,7 @@ def main():
     for i in range(1,3):
       kwords = {'corrupt_prob': 0.0, 'shuffle_pixels': i, 'random_pixel_prob': 0.0}
       kwords_list.append(kwords)
+
   print(kwords_list)
   # setup logging
   for kwords in kwords_list:
