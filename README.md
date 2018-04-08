@@ -1,3 +1,27 @@
+Modification:
+- Add shuffle pixels
+- Add random pixels
+- Add save models
+- Change default learning rate to 0.01
+- Now by default, there is no learning rate decay
+- Now run different corruption levels in loop, from 0 to 1 with spacing 0.1
+- Now loggings have their name instead of root
+
+Parameters change:
+- Add, label-corrupt, bool type, set to True for corrput labels
+- Add, pixel-corrupt, bool type, set to True for corrput pixels
+- Add, pixel-shuffle, bool type, set to True for shuffle pixels
+- Add, adjust-lr, bool type, set to True for learning rate decay by factor 0.1 at epoch 150,225
+- Delete, label-corrupt-prob
+- Add save-every, int type, set to int value for save model every such epoches
+- Change, learning-rate, change default value from 0.1 to 0.01
+
+
+
+
+
+
+
 - [Code organization](#code-organization)
 - [Command examples](#command-examples)
 - [SGD implicit regularization](#sgd-implicit-regularization)
