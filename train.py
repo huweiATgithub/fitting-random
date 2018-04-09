@@ -44,10 +44,15 @@ def get_data_loaders(args, corrupt_kwargs, shuffle_train=True):
                             transform=transform_train, num_classes=args.num_classes,
                             **corrupt_kwargs),
         batch_size=args.batch_size, shuffle=shuffle_train, **kwargs)
-    val_loader = torch.utils.data.DataLoader(
+    if corrupt_kwargs['random_pixel_prob']>0 or corrupt_kwargs['shuffle_pixels']>0:
+      val_loader = torch.utils.data.DataLoader(
+          CIFAR10RandomLabels(root='./data', train=False,
+                              transform=transform_test, num_classes=args.num_classes, **corrupt_kwargs),
+          batch_size=args.batch_size, shuffle=False, **kwargs)
+    else:
+      val_loader = torch.utils.data.DataLoader(
         CIFAR10RandomLabels(root='./data', train=False,
                             transform=transform_test, num_classes=args.num_classes),
-                          # corrupt_prob=args.label_corrupt_prob),
         batch_size=args.batch_size, shuffle=False, **kwargs)
 
     return train_loader, val_loader
