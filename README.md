@@ -1,3 +1,15 @@
+Updates: Aug 9, 2018
+- Now random pixels and shuffle pixels apply to validation set
+
+
+
+
+
+
+
+
+
+
 Updates:
 Modification:
 - Add shuffle pixels
