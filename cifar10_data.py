@@ -63,7 +63,7 @@ class CIFAR10RandomLabels(datasets.CIFAR10):
         gaussian.append(np.random.normal(k[0], k[1], size=(32, 32)))
       gaussian = np.array(gaussian).transpose((1, 2, 0))  # (32,32,3) array
       cor_img = (1 - random_pixel_prob) * img + random_pixel_prob * gaussian
-      corrimgs.append(cor_img)
+      corrimgs.append(cor_img.astype('uint8'))
     if self.train:
       self.train_data = np.array(corrimgs)
     else:

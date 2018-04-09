@@ -33,8 +33,8 @@ parser.add_argument('--mlp-spec', default='512',
 parser.add_argument('--name', default='', help='Experiment name')
 parser.add_argument('--adjust-lr', type=bool, default=False)
 
+parser.add_argument('--start-from', type=int, default=0)
 parser.add_argument('--save-every', type=int, default=0)
-
 
 def format_experiment_name(args):
   name = args.name
