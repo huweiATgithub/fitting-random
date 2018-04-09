@@ -1,7 +1,15 @@
+Updates: Aug 9, 2018 night
+- Change naming to formatted
+- Add time counting
+- Fix logger, now will not incorrectly write log info to the first logger 
+
+
+
+
 Updates: Aug 9, 2018
 - Now random pixels and shuffle pixels apply to validation set
 - Add start from specific epoch, not need to start from beginning
-- Correct the error of random pixels, change type to uint8
+- Fix the bug of random pixels, change type to uint8
 
 
 
