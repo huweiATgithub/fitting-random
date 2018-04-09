@@ -8,6 +8,7 @@ import torch.nn as nn
 import torchvision.transforms as transforms
 import torch.backends.cudnn as cudnn
 import torch.optim
+import time
 
 from cifar10_data import CIFAR10RandomLabels
 
@@ -235,14 +236,27 @@ def setup_logging(args, log_name=''):
   print('Logging into %s...' % exp_dir)
 
 
-def get_log_name(corrupt_prob=0.0, shuffle_pixels=0, random_pixel_prob=0.0):
-  log_name = ''
+def get_log_name(args, corrupt_prob=0.0, shuffle_pixels=0, random_pixel_prob=0.0):
+  log_name=''
+  if corrupt_prob==0.0 and shuffle_pixels==0.0 and random_pixel_prob==0.0:
+    if args.pixel_corrupt:
+      log_name += 'random%1.1f' % random_pixel_prob
+    if args.label_corrupt:
+      log_name += 'corrupt%1.1f' % corrupt_prob
+    if args.pixel_shuffle:
+      log_name += 'shuffle%1.1f' % corrupt_prob
+
+
   if corrupt_prob > 0:
-    log_name += 'corrupt%g_' % corrupt_prob
+    log_name += 'corrupt%1.1f' % corrupt_prob
   if shuffle_pixels > 0:
-    log_name += 'shuffle%g_' % shuffle_pixels
+    log_name += 'shuffle%1.1f' % shuffle_pixels
   if random_pixel_prob > 0:
-    log_name += 'random%g_' % random_pixel_prob
+    log_name += 'random%1.1f' % random_pixel_prob
+
+  if log_name=='':
+    log_name += '_'
+
   return log_name
 
 
@@ -269,10 +283,11 @@ def main():
   # setup logging
   num_exp_count = -1
   for kwords in kwords_list:
+    start_time = time.time()
     num_exp_count += 1
     if num_exp_count < args.start_from:
       continue
-    log_name = get_log_name(**kwords)
+    log_name = get_log_name(args, **kwords)
     setup_logging(args, log_name)
     log = logging.getLogger(log_name)
 
@@ -282,6 +297,8 @@ def main():
       log.info('Number of parameters: %d', sum([p.data.nelement() for p in model.parameters()]))
       train_model(args, model, train_loader, val_loader, log_name=log_name)
 
+    elapsed_time = time.time() - start_time
+    log.info('Total running time for this experiment is %s', time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
 
 
 if __name__ == '__main__':
