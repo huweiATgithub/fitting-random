@@ -35,6 +35,7 @@ parser.add_argument('--adjust-lr', type=bool, default=False)
 
 parser.add_argument('--start-from', type=int, default=0)
 parser.add_argument('--save-every', type=int, default=0)
+parser.add_argument('--num-exp', type=int, default=10)
 
 def format_experiment_name(args):
   name = args.name
@@ -57,6 +58,9 @@ def format_experiment_name(args):
     name += '_NoWd'
   if not args.data_augmentation:
     name += '_NoAug'
+
+  if args.adjust_lr:
+    name += '_LrDecay'
 
   return name
 

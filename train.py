@@ -195,8 +195,8 @@ class AverageMeter(object):
 
 
 def adjust_learning_rate(optimizer, epoch, args):
-  """Sets the learning rate to the initial LR decayed by 10 after 150 and 225 epochs"""
-  lr = args.learning_rate * (0.1 ** (epoch // 150)) * (0.1 ** (epoch // 225))
+  """Sets the learning rate to the initial LR decayed by 0.9 every 10 epochs"""
+  lr = args.learning_rate * (0.8 ** (epoch // 10))
   for param_group in optimizer.param_groups:
       param_group['lr'] = lr
 
@@ -261,9 +261,10 @@ def get_log_name(args, corrupt_prob=0.0, shuffle_pixels=0, random_pixel_prob=0.0
 
 
 def main():
-  number_exp = 10
-  corrupt_spacing = 1/10
+
   args = cmd_args.parse_args()
+  number_exp = args.num_exp
+  corrupt_spacing = 1 / number_exp
   kwords = {'corrupt_prob': 0.0, 'shuffle_pixels': 0, 'random_pixel_prob': 0.0}
   kwords_list = [kwords]
   if args.label_corrupt:
